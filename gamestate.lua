@@ -86,15 +86,19 @@ for k in pairs(love.handlers) do
 end
 
 function GS.registerEvents(callbacks)
-	local registry = {}
-	callbacks = callbacks or all_callbacks
-	for _, f in ipairs(callbacks) do
-		registry[f] = love[f] or __NULL__
-		love[f] = function(...)
-			registry[f](...)
-			return GS[f](...)
-		end
-	end
+  local preRegistry, postRegistry = {}, {}
+  callbacks = callbacks or all_callbacks
+  for _, f in ipairs(callbacks) do
+    preRegistry[f] = love[f] or __NULL__
+    postRegistry[f] = love[f.."PostGS"] or __NULL__
+    love[f] = function(...)
+      local ret
+      preRegistry[f](...)
+      ret = GS[f](...)
+      postRegistry[f](...)
+      return ret
+    end
+  end
 end
 
 -- forward any undefined functions
